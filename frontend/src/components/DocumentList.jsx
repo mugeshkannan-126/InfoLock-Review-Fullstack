@@ -1,55 +1,297 @@
 import React from 'react';
-import { FiEdit2, FiTrash2, FiDownload } from 'react-icons/fi';
+import PropTypes from 'prop-types';
+import { FiEdit2, FiTrash2, FiDownload, FiFile, FiClock, FiFolder } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const DocumentList = ({ documents, onEdit, onDelete }) => {
+const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
+    const formatFileType = (type) => {
+        if (!type) return 'FILE';
+        const parts = type.split('/');
+        return parts[parts.length - 1].toUpperCase();
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Recently';
+        try {
+            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        } catch {
+            return 'Recently';
+        }
+    };
+
+    const formatFileSize = (bytes) => {
+        if (!bytes) return 'Unknown size';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    };
+
+    const getFileIconColor = (type) => {
+        const formattedType = formatFileType(type).toLowerCase();
+        switch (formattedType) {
+            case 'pdf': return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' };
+            case 'doc':
+            case 'docx': return { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' };
+            case 'xls':
+            case 'xlsx': return { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-200' };
+            case 'jpg':
+            case 'jpeg':
+            case 'png': return { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-200' };
+            case 'txt': return { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200' };
+            case 'zip':
+            case 'rar': return { bg: 'bg-yellow-50', text: 'text-yellow-600', border: 'border-yellow-200' };
+            default: return { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-200' };
+        }
+    };
+
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.05 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, x: -20, scale: 0.95 },
+        visible: {
+            opacity: 1,
+            x: 0,
+            scale: 1,
+            transition: { type: "spring", stiffness: 300, damping: 24, duration: 0.4 }
+        }
+    };
+
     return (
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-            <ul className="divide-y divide-gray-200">
-                {documents.map((document) => (
-                    <li key={document.id}>
-                        <div className="px-4 py-4 sm:px-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center">
-                                    <div className="flex-shrink-0 bg-blue-100 rounded-md p-2">
-                                        <div className="text-blue-600 font-medium text-xs uppercase">
-                                            {document.type}
-                                        </div>
-                                    </div>
-                                    <div className="ml-4">
-                                        <div className="text-sm font-medium text-gray-900 truncate">
-                                            {document.name}
-                                        </div>
-                                        <div className="text-sm text-gray-500">{document.category}</div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center space-x-4">
-                                    <span className="text-sm text-gray-500">{document.size}</span>
-                                    <span className="text-sm text-gray-500">{document.uploadedAt}</span>
-                                    <div className="flex space-x-2">
-                                        <button
-                                            onClick={() => onEdit(document)}
-                                            className="text-gray-400 hover:text-blue-500"
-                                        >
-                                            <FiEdit2 />
-                                        </button>
-                                        <button
-                                            onClick={() => onDelete(document.id)}
-                                            className="text-gray-400 hover:text-red-500"
-                                        >
-                                            <FiTrash2 />
-                                        </button>
-                                        <button className="text-gray-400 hover:text-green-500">
-                                            <FiDownload />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+        <motion.div
+            className="bg-white/70 backdrop-blur-sm shadow-xl rounded-2xl border border-white/20 overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-gray-50/80 to-white/60 px-6 py-4 border-b border-white/30">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl">
+                            <FiFolder className="w-5 h-5 text-blue-600" />
                         </div>
-                    </li>
-                ))}
-            </ul>
-        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Document List</h3>
+                            <p className="text-sm text-gray-500">{documents.length} documents</p>
+                        </div>
+                    </div>
+
+                    <div className="hidden lg:flex items-center space-x-8 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <span className="w-20 text-center">Type</span>
+                        <span className="w-24 text-center">Size</span>
+                        <span className="w-32 text-center">Modified</span>
+                        <span className="w-24 text-center">Actions</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Document List */}
+            <motion.div variants={containerVariants} initial="hidden" animate="visible">
+                <ul className="divide-y divide-gray-100/50">
+                    <AnimatePresence mode="popLayout">
+                        {documents.map((document, index) => {
+                            const fileColors = getFileIconColor(document.fileType || document.type);
+                            const fileName = document.fileName || document.name;
+                            const category = document.category || 'Uncategorized';
+
+                            return (
+                                <motion.li
+                                    key={document.id}
+                                    variants={itemVariants}
+                                    layout
+                                    whileHover={{ backgroundColor: "rgba(59, 130, 246, 0.02)", scale: 1.01, x: 4 }}
+                                    className="group transition-colors duration-300"
+                                >
+                                    <div className="px-6 py-5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4 flex-1 min-w-0">
+                                                <motion.div
+                                                    className={`${fileColors.bg} ${fileColors.border} border-2 rounded-xl p-3 shadow-sm`}
+                                                    whileHover={{ scale: 1.1, rotate: 5 }}
+                                                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                                                >
+                                                    <div className="flex items-center space-x-2">
+                                                        <FiFile className={`w-4 h-4 ${fileColors.text}`} />
+                                                        <span className={`font-bold text-xs uppercase ${fileColors.text}`}>
+                                                            {formatFileType(document.fileType || document.type)}
+                                                        </span>
+                                                    </div>
+                                                </motion.div>
+
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center space-x-3">
+                                                        <h4 className="text-lg font-semibold text-gray-900 truncate group-hover:text-blue-800 transition-colors duration-300">
+                                                            {fileName}
+                                                        </h4>
+                                                        <motion.span
+                                                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 border border-blue-200/50"
+                                                            initial={{ scale: 0.8, opacity: 0 }}
+                                                            animate={{ scale: 1, opacity: 1 }}
+                                                            transition={{ delay: index * 0.05 }}
+                                                        >
+                                                            {category}
+                                                        </motion.span>
+
+                                                        {/* Status Badge (if available) */}
+                                                        {document.status && (
+                                                            <span
+                                                                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                                                    document.status === 'ACTIVE'
+                                                                        ? 'bg-green-100 text-green-800'
+                                                                        : document.status === 'ARCHIVED'
+                                                                            ? 'bg-yellow-100 text-yellow-800'
+                                                                            : 'bg-gray-100 text-gray-800'
+                                                                }`}
+                                                            >
+                                                                {document.status}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="mt-2 flex items-center space-x-6 text-sm text-gray-500">
+                                                        <div className="flex items-center space-x-1">
+                                                            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                                            <span>{formatFileSize(document.fileSize)}</span>
+                                                        </div>
+                                                        <div className="flex items-center space-x-1">
+                                                            <FiClock className="w-4 h-4" />
+                                                            <span>{formatDate(document.uploadDate || document.uploaded)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Actions */}
+                                            <motion.div
+                                                className="flex items-center space-x-2 opacity-60 group-hover:opacity-100 transition-opacity duration-300"
+                                                initial={{ x: 10, opacity: 0 }}
+                                                animate={{ x: 0, opacity: 0.6 }}
+                                                whileHover={{ opacity: 1 }}
+                                                transition={{ delay: index * 0.02 }}
+                                            >
+                                                {[
+                                                    {
+                                                        icon: FiEdit2,
+                                                        onClick: () => onEdit(document),
+                                                        className: "text-green-600 hover:text-green-700 hover:bg-green-50",
+                                                        label: "Edit document"
+                                                    },
+                                                    {
+                                                        icon: FiDownload,
+                                                        onClick: () => onDownload(document.id, fileName),
+                                                        className: "text-blue-600 hover:text-blue-700 hover:bg-blue-50",
+                                                        label: "Download document"
+                                                    },
+                                                    {
+                                                        icon: FiTrash2,
+                                                        onClick: () => {
+                                                            if (window.confirm(`Are you sure you want to delete "${fileName}"?`)) {
+                                                                onDelete(document.id);
+                                                            }
+                                                        },
+                                                        className: "text-red-600 hover:text-red-700 hover:bg-red-50",
+                                                        label: "Delete document"
+                                                    }
+                                                ].map((action, actionIndex) => (
+                                                    <motion.button
+                                                        key={actionIndex}
+                                                        onClick={action.onClick}
+                                                        className={`p-3 rounded-xl transition-all duration-200 ${action.className} group/action`}
+                                                        aria-label={action.label}
+                                                        whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        initial={{ scale: 0.8, opacity: 0 }}
+                                                        animate={{ scale: 1, opacity: 1 }}
+                                                        transition={{ delay: (index * 0.05) + (actionIndex * 0.1) }}
+                                                    >
+                                                        <action.icon className="w-4 h-4 group-hover/action:scale-110 transition-transform duration-200" />
+                                                    </motion.button>
+                                                ))}
+                                            </motion.div>
+                                        </div>
+                                    </div>
+
+                                    <motion.div
+                                        className="h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-100"
+                                        initial={{ scaleX: 0 }}
+                                        whileHover={{ scaleX: 1 }}
+                                        transition={{ duration: 0.3 }}
+                                        style={{ originX: 0 }}
+                                    />
+                                </motion.li>
+                            );
+                        })}
+                    </AnimatePresence>
+                </ul>
+            </motion.div>
+
+            {/* Footer */}
+            {documents.length > 0 && (
+                <motion.div
+                    className="bg-gradient-to-r from-gray-50/60 to-white/40 px-6 py-4 border-t border-white/30"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                >
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                        <div className="flex items-center space-x-4">
+                            <span className="font-medium">
+                                {documents.length} document{documents.length !== 1 ? 's' : ''}
+                            </span>
+                            <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                            <span>
+                                {formatFileSize(documents.reduce((sum, doc) => sum + (doc.fileSize || 0), 0))} total size
+                            </span>
+                        </div>
+
+                        <motion.div
+                            className="flex items-center space-x-2"
+                            initial={{ x: 10, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: 0.4 }}
+                        >
+                            <div className="flex space-x-1">
+                                {[1, 2, 3].map((i) => (
+                                    <motion.div
+                                        key={i}
+                                        className="w-2 h-2 bg-blue-400 rounded-full"
+                                        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                                        transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                                    />
+                                ))}
+                            </div>
+                            <span className="text-xs text-gray-500">Live sync enabled</span>
+                        </motion.div>
+                    </div>
+                </motion.div>
+            )}
+        </motion.div>
     );
 };
 
-export default DocumentList;
+DocumentList.propTypes = {
+    documents: PropTypes.arrayOf(
+        PropTypes.shape({
+            id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+            fileName: PropTypes.string,
+            fileType: PropTypes.string,
+            category: PropTypes.string,
+            fileSize: PropTypes.number,
+            uploadDate: PropTypes.string,
+            status: PropTypes.string,
+        })
+    ).isRequired,
+    onEdit: PropTypes.func.isRequired,
+    onDelete: PropTypes.func.isRequired,
+    onDownload: PropTypes.func.isRequired,
+};
+
+export default React.memo(DocumentList);

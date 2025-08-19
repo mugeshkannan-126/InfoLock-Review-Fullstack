@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 // React Icons
 import { FiGithub, FiTwitter, FiLinkedin, FiMail } from "react-icons/fi";
 import { FaDiscord } from "react-icons/fa";
-import logo from "../assets/logo.png";
+import logo from "../assets/appLogo.png";
 const Footer = () => {
     const currentYear = new Date().getFullYear();
 

@@ -1,14 +1,28 @@
 import React, { useState } from 'react';
+import { authAPI } from '../api/api.js';
 
 const Register = ({ onSwitchToLogin, onClose }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle registration logic
-        console.log('Registration submitted:', { name, email, password });
+        setError('');
+        setLoading(true);
+
+        try {
+            await authAPI.register(name, email, password);
+            setLoading(false);
+            onSwitchToLogin(); // Switch to login after successful registration
+            // Optionally, show a success message before switching
+            alert('Registration successful! Please log in.');
+        } catch (err) {
+            setLoading(false);
+            setError(err.error || 'Registration failed. Please try again.');
+        }
     };
 
     return (
@@ -20,6 +34,10 @@ const Register = ({ onSwitchToLogin, onClose }) => {
                 <span className="text-indigo-500">User</span> Sign Up
             </p>
 
+            {error && (
+                <p className="text-red-500 text-sm text-center">{error}</p>
+            )}
+
             <div className="w-full">
                 <p>Name</p>
                 <input
@@ -29,6 +47,7 @@ const Register = ({ onSwitchToLogin, onClose }) => {
                     className="border border-gray-200 rounded w-full p-2 mt-1 outline-indigo-500"
                     type="text"
                     required
+                    disabled={loading}
                 />
             </div>
 
@@ -41,6 +60,7 @@ const Register = ({ onSwitchToLogin, onClose }) => {
                     className="border border-gray-200 rounded w-full p-2 mt-1 outline-indigo-500"
                     type="email"
                     required
+                    disabled={loading}
                 />
             </div>
 
@@ -53,6 +73,7 @@ const Register = ({ onSwitchToLogin, onClose }) => {
                     className="border border-gray-200 rounded w-full p-2 mt-1 outline-indigo-500"
                     type="password"
                     required
+                    disabled={loading}
                 />
             </div>
 
@@ -62,15 +83,16 @@ const Register = ({ onSwitchToLogin, onClose }) => {
                     onClick={onSwitchToLogin}
                     className="text-indigo-500 cursor-pointer"
                 >
-          click here
-        </span>
+                    click here
+                </span>
             </p>
 
             <button
                 type="submit"
-                className="bg-indigo-500 hover:bg-indigo-600 transition-all text-white w-full py-2 rounded-md cursor-pointer"
+                className={`bg-indigo-500 hover:bg-indigo-600 transition-all text-white w-full py-2 rounded-md cursor-pointer ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={loading}
             >
-                Create Account
+                {loading ? 'Creating Account...' : 'Create Account'}
             </button>
         </form>
     );

@@ -43,6 +43,7 @@ import Footer from "./components/Footer";
 import Documents from "./pages/Documents";
 import AuthModal from "./pages/AuthModal";
 import ScrollToTop from "./components/ScrollToTop.jsx";
+import {ToastContainer} from "react-toastify";
 
 export default function App() {
     const [authModal, setAuthModal] = useState({
@@ -65,6 +66,7 @@ export default function App() {
     return (
         <Router>
             <ScrollToTop />
+            <ToastContainer position="top-center" autoClose={2000} />
             <div className={`min-h-screen flex flex-col ${authModal.isOpen ? 'overflow-hidden' : ''}`}>
                 {/* Blur wrapper for navbar and content when modal is open */}
                 <div className={`flex-grow transition-all ${authModal.isOpen ? 'filter blur-sm' : ''}`}>
