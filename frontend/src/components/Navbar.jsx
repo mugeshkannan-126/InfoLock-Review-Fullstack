@@ -246,50 +246,95 @@ const NavLink = ({ to, icon, children, onClick }) => {
     );
 };
 
+// JWT decode function
+const decodeJWT = (token) => {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split('')
+                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        );
+        return JSON.parse(jsonPayload);
+    } catch (err) {
+        console.error("Invalid token", err);
+        return null;
+    }
+};
+
 export default function Navbar({ onLoginClick }) {
     const [anchorEl, setAnchorEl] = useState(null);
     const [userAnchorEl, setUserAnchorEl] = useState(null);
     const [scrolled, setScrolled] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [user, setUser] = useState({
-        name: "John Doe",
-        email: "john.doe@example.com",
+        name: "",
+        email: "",
         avatar: "",
     });
 
     const open = Boolean(anchorEl);
     const userMenuOpen = Boolean(userAnchorEl);
 
-    // Check if user is logged in on component mount
+    // Check if user is logged in on component mount and when isLoggedIn changes
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        console.log("Raw token:", token); // 👈 check if token is stored
+        const checkAuthStatus = () => {
+            const token = localStorage.getItem("token");
+            console.log("Checking auth status. Token exists:", !!token);
 
-        if (token) {
-            try {
-                const decodedToken = decodeJWT(token);
-                console.log("Decoded JWT:", decodedToken); // 👈 check payload
+            if (token) {
+                try {
+                    const decodedToken = decodeJWT(token);
+                    console.log("Decoded JWT:", decodedToken);
 
-                setIsLoggedIn(true);
+                    if (decodedToken) {
+                        setIsLoggedIn(true);
 
-                // Extract username from email (before @)
-                const email = decodedToken.sub || "";
-                const username = email.includes("@")
-                    ? email.split("@")[0].toUpperCase()
-                    : email.toUpperCase();
+                        // Extract username from email (before @)
+                        const email = decodedToken.sub || decodedToken.email || "";
+                        const username = email.includes("@")
+                            ? email.split("@")[0]
+                            : "User";
 
-                setUser({
-                    name: username || "USER",
-                    email: email,
-                });
+                        // Capitalize first letter
+                        const formattedUsername = username.charAt(0).toUpperCase() + username.slice(1);
 
-            } catch (err) {
-                console.error("JWT decode error", err);
+                        setUser({
+                            name: formattedUsername || "User",
+                            email: email,
+                        });
+                    } else {
+                        // Invalid token
+                        setIsLoggedIn(false);
+                        setUser({ name: "", email: "" });
+                        localStorage.removeItem("token");
+                    }
+                } catch (err) {
+                    console.error("JWT decode error", err);
+                    setIsLoggedIn(false);
+                    setUser({ name: "", email: "" });
+                    localStorage.removeItem("token");
+                }
+            } else {
+                setIsLoggedIn(false);
+                setUser({ name: "", email: "" });
             }
-        }
+        };
+
+        checkAuthStatus();
+
+        // Listen for storage events to handle login/logout from other tabs
+        const handleStorageChange = (e) => {
+            if (e.key === "token") {
+                checkAuthStatus();
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
-
-
 
     // Handle scroll effect
     useEffect(() => {
@@ -321,7 +366,9 @@ export default function Navbar({ onLoginClick }) {
     const handleLogout = () => {
         localStorage.removeItem("token");
         setIsLoggedIn(false);
+        setUser({ name: "", email: "" });
         handleUserMenuClose();
+        console.log("User logged out");
     };
 
     const menuVariants = {
@@ -555,7 +602,7 @@ export default function Navbar({ onLoginClick }) {
                 </Box>
 
                 {/* Conditional rendering based on login status */}
-                {isLoggedIn ? (
+                {isLoggedIn && user.name ? (
                     <>
                         <motion.div
                             whileHover={{ scale: 1.05 }}

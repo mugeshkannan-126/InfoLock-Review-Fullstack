@@ -119,8 +119,9 @@ export const authAPI = {
     login: async (email, password) => {
         try {
             const response = await Api.post('/auth/login', { email, password });
-            const token = response.data.token;
+            const { token, username } = response.data; // Assuming backend returns username
             localStorage.setItem('token', token);
+            localStorage.setItem('username', username);
             return token;
         } catch (error) {
             throw error.response?.data || { error: 'Login failed' };
@@ -148,6 +149,24 @@ export const documentAPI = {
         } catch (error) {
             console.error('Error fetching documents:', error);
             throw new Error(error.response?.data?.message || 'Failed to fetch documents');
+        }
+    },
+
+    shareDocument: async (documentId, isPublic = true, expiryDays = 30, maxViews = 100) => {
+        try {
+            const response = await Api.post('/documents/share', {
+                documentId,
+                isPublic,
+                expiryDays,
+                maxViews
+            });
+            return response.data;
+        } catch (error) {
+            const message = error.response?.data?.message ||
+            error.response?.status === 403 ?
+                'You do not have permission to share this document' :
+                'Failed to share document';
+            throw new Error(message);
         }
     },
 
@@ -278,6 +297,7 @@ export const documentAPI = {
             throw new Error(error.message || 'Failed to fetch document');
         }
     },
+
 
     getDocumentsByCategory: async (category) => {
         try {

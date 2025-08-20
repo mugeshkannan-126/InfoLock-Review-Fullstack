@@ -22,33 +22,51 @@ const Dashboard = () => {
     const [uploading, setUploading] = useState(false);
     const [downloadingId, setDownloadingId] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
-    const API_BASE_URL = 'http://localhost:8080/api/documents';
+    const [currentUser, setCurrentUser] = useState(null); // Add current user state
 
-    // ===== Helper Functions =====
-    // const formatFileSize = useCallback((bytes) => {
-    //     if (!bytes) return '0 Bytes';
-    //     const k = 1024;
-    //     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    //     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    //     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-    // }, []);
-    //
-    // const formatDate = useCallback((dateString) => {
-    //     if (!dateString) return 'Recently';
-    //     try {
-    //         const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    //         return new Date(dateString).toLocaleDateString(undefined, options);
-    //     } catch {
-    //         return 'Recently';
-    //     }
-    // }, []);
+    // ===== Get Current User =====
+    useEffect(() => {
+        // Get user info from localStorage or token
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                // Parse JWT token to get user info (if stored)
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                setCurrentUser({
+                    username: payload.sub || payload.username,
+                    id: payload.userId || payload.id
+                });
+            } catch (error) {
+                console.error('Error parsing token:', error);
+                // Fallback: try to get user from API
+                fetchCurrentUser();
+            }
+        }
+    }, []);
+
+    const fetchCurrentUser = async () => {
+        try {
+            // Replace with your actual user API endpoint
+            const response = await fetch('http://localhost:8080/api/users/me', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            if (response.ok) {
+                const userData = await response.json();
+                setCurrentUser(userData);
+            }
+        } catch (error) {
+            console.error('Failed to fetch user:', error);
+        }
+    };
 
     // ===== Fetch Documents on Mount =====
     useEffect(() => {
         const fetchDocuments = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
-                setDocuments([]); // Empty array for unauthenticated users
+                setDocuments([]);
                 setIsLoading(false);
                 toast.info('Please log in to view and manage your documents');
                 return;
@@ -68,7 +86,8 @@ const Dashboard = () => {
                     type: doc.fileType,
                     size: doc.size || formatFileSize(doc.fileSize),
                     uploaded: doc.uploaded || formatDate(doc.uploadDate),
-                    tags: doc.tags || []
+                    tags: doc.tags || [],
+                    owner: doc.owner || { username: doc.ownerUsername } // Ensure owner info is included
                 }));
                 setDocuments(formattedDocs);
             } catch (error) {
@@ -118,6 +137,20 @@ const Dashboard = () => {
 
     const filteredDocuments = filteredAndSortedDocuments();
 
+    // ===== Check if user owns a document =====
+    const isDocumentOwner = useCallback((document) => {
+        if (!currentUser || !document) return false;
+
+        // Check if document has owner info
+        if (document.owner) {
+            return document.owner.username === currentUser.username;
+        }
+
+        // Fallback check (if your API doesn't return owner info)
+        // This assumes documents without owner info belong to the current user
+        return true;
+    }, [currentUser]);
+
     // ===== Get Categories for Filter =====
     const categories = useCallback(() => {
         const cats = [...new Set(documents.map(doc => doc.category).filter(Boolean))];
@@ -161,6 +194,7 @@ const Dashboard = () => {
                 uploadDate: new Date().toISOString(),
                 size: formatFileSize(file.size),
                 uploaded: formatDate(new Date()),
+                owner: currentUser // Set owner as current user
             }, ...prev]);
 
             toast.success('Document uploaded successfully');
@@ -511,6 +545,7 @@ const Dashboard = () => {
                                         >
                                             <DocumentCard
                                                 document={document}
+                                                isOwner={isDocumentOwner(document)}
                                                 onEdit={() => {
                                                     setCurrentDocument(document);
                                                     setIsModalOpen(true);
@@ -529,6 +564,7 @@ const Dashboard = () => {
                                 >
                                     <DocumentList
                                         documents={filteredDocuments}
+                                        isOwnerCheck={isDocumentOwner}
                                         onEdit={(doc) => {
                                             setCurrentDocument(doc);
                                             setIsModalOpen(true);

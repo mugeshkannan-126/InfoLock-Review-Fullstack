@@ -44,6 +44,8 @@ import Documents from "./pages/Documents";
 import AuthModal from "./pages/AuthModal";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import {ToastContainer} from "react-toastify";
+import SharedDocumentViewer from './components/SharedDocumentViewer';
+
 
 export default function App() {
     const [authModal, setAuthModal] = useState({
@@ -77,6 +79,7 @@ export default function App() {
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/shared/:token" element={<SharedDocumentViewer />} />
                     </Routes>
                 </div>
                 <Footer />
