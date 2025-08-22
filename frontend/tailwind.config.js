@@ -10,6 +10,9 @@ export default {
         outfit: ['Outfit', 'sans-serif'],
         playfair: ['Poppins', 'serif'],
       },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+      },
       colors: {
         primary: {
           900: '#111827',

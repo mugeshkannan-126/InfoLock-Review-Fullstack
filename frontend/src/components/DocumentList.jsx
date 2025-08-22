@@ -1,33 +1,10 @@
+// src/components/DocumentList.jsx
 import React from 'react';
-import PropTypes from 'prop-types';
-import { FiEdit2, FiTrash2, FiDownload, FiFile, FiClock, FiFolder } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiDownload, FiFile, FiClock, FiFolder, FiTrendingUp } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatFileType, formatDate, formatFileSize } from '../utils/documentUtils';
 
-const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
-    const formatFileType = (type) => {
-        if (!type) return 'FILE';
-        const parts = type.split('/');
-        return parts[parts.length - 1].toUpperCase();
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return 'Recently';
-        try {
-            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-            return new Date(dateString).toLocaleDateString(undefined, options);
-        } catch {
-            return 'Recently';
-        }
-    };
-
-    const formatFileSize = (bytes) => {
-        if (!bytes) return 'Unknown size';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-    };
-
+const DocumentList = ({ documents, onEdit, onDelete, onDownload, onTogglePrivacy, isTogglingPrivacy, isOwnerCheck }) => {
     const getFileIconColor = (type) => {
         const formattedType = formatFileType(type).toLowerCase();
         switch (formattedType) {
@@ -48,20 +25,12 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
 
     const containerVariants = {
         hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.05 }
-        }
+        visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
     };
 
     const itemVariants = {
         hidden: { opacity: 0, x: -20, scale: 0.95 },
-        visible: {
-            opacity: 1,
-            x: 0,
-            scale: 1,
-            transition: { type: "spring", stiffness: 300, damping: 24, duration: 0.4 }
-        }
+        visible: { opacity: 1, x: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24, duration: 0.4 } }
     };
 
     return (
@@ -71,7 +40,6 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
-            {/* Header */}
             <div className="bg-gradient-to-r from-gray-50/80 to-white/60 px-6 py-4 border-b border-white/30">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -83,7 +51,6 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
                             <p className="text-sm text-gray-500">{documents.length} documents</p>
                         </div>
                     </div>
-
                     <div className="hidden lg:flex items-center space-x-8 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                         <span className="w-20 text-center">Type</span>
                         <span className="w-24 text-center">Size</span>
@@ -92,8 +59,6 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
                     </div>
                 </div>
             </div>
-
-            {/* Document List */}
             <motion.div variants={containerVariants} initial="hidden" animate="visible">
                 <ul className="divide-y divide-gray-100/50">
                     <AnimatePresence mode="popLayout">
@@ -101,6 +66,7 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
                             const fileColors = getFileIconColor(document.fileType || document.type);
                             const fileName = document.fileName || document.name;
                             const category = document.category || 'Uncategorized';
+                            const isOwner = isOwnerCheck(document);
 
                             return (
                                 <motion.li
@@ -125,7 +91,6 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
                                                         </span>
                                                     </div>
                                                 </motion.div>
-
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center space-x-3">
                                                         <h4 className="text-lg font-semibold text-gray-900 truncate group-hover:text-blue-800 transition-colors duration-300">
@@ -139,23 +104,16 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
                                                         >
                                                             {category}
                                                         </motion.span>
-
-                                                        {/* Status Badge (if available) */}
-                                                        {document.status && (
+                                                        {document.isPublic !== undefined && (
                                                             <span
                                                                 className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                                                    document.status === 'ACTIVE'
-                                                                        ? 'bg-green-100 text-green-800'
-                                                                        : document.status === 'ARCHIVED'
-                                                                            ? 'bg-yellow-100 text-yellow-800'
-                                                                            : 'bg-gray-100 text-gray-800'
+                                                                    document.isPublic ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                                                                 }`}
                                                             >
-                                                                {document.status}
+                                                                {document.isPublic ? 'Public' : 'Private'}
                                                             </span>
                                                         )}
                                                     </div>
-
                                                     <div className="mt-2 flex items-center space-x-6 text-sm text-gray-500">
                                                         <div className="flex items-center space-x-1">
                                                             <div className="w-2 h-2 bg-green-400 rounded-full"></div>
@@ -165,11 +123,15 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
                                                             <FiClock className="w-4 h-4" />
                                                             <span>{formatDate(document.uploadDate || document.uploaded)}</span>
                                                         </div>
+                                                        {document.owner && (
+                                                            <div className="flex items-center space-x-1">
+                                                                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                                                                <span>{document.owner.username}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {/* Actions */}
                                             <motion.div
                                                 className="flex items-center space-x-2 opacity-60 group-hover:opacity-100 transition-opacity duration-300"
                                                 initial={{ x: 10, opacity: 0 }}
@@ -182,13 +144,23 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
                                                         icon: FiEdit2,
                                                         onClick: () => onEdit(document),
                                                         className: "text-green-600 hover:text-green-700 hover:bg-green-50",
-                                                        label: "Edit document"
+                                                        label: "Edit document",
+                                                        show: isOwner
                                                     },
                                                     {
                                                         icon: FiDownload,
                                                         onClick: () => onDownload(document.id, fileName),
                                                         className: "text-blue-600 hover:text-blue-700 hover:bg-blue-50",
-                                                        label: "Download document"
+                                                        label: "Download document",
+                                                        show: true
+                                                    },
+                                                    {
+                                                        icon: FiTrendingUp,
+                                                        onClick: () => onTogglePrivacy(document.id, !document.isPublic),
+                                                        className: document.isPublic ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50" : "text-gray-600 hover:text-gray-700 hover:bg-gray-50",
+                                                        label: document.isPublic ? "Make private" : "Make public",
+                                                        show: isOwner,
+                                                        loading: isTogglingPrivacy === document.id
                                                     },
                                                     {
                                                         icon: FiTrash2,
@@ -198,27 +170,34 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
                                                             }
                                                         },
                                                         className: "text-red-600 hover:text-red-700 hover:bg-red-50",
-                                                        label: "Delete document"
+                                                        label: "Delete document",
+                                                        show: isOwner
                                                     }
                                                 ].map((action, actionIndex) => (
-                                                    <motion.button
-                                                        key={actionIndex}
-                                                        onClick={action.onClick}
-                                                        className={`p-3 rounded-xl transition-all duration-200 ${action.className} group/action`}
-                                                        aria-label={action.label}
-                                                        whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}
-                                                        whileTap={{ scale: 0.95 }}
-                                                        initial={{ scale: 0.8, opacity: 0 }}
-                                                        animate={{ scale: 1, opacity: 1 }}
-                                                        transition={{ delay: (index * 0.05) + (actionIndex * 0.1) }}
-                                                    >
-                                                        <action.icon className="w-4 h-4 group-hover/action:scale-110 transition-transform duration-200" />
-                                                    </motion.button>
+                                                    action.show && (
+                                                        <motion.button
+                                                            key={actionIndex}
+                                                            onClick={action.onClick}
+                                                            disabled={action.loading}
+                                                            className={`p-3 rounded-xl transition-all duration-200 ${action.className} group/action`}
+                                                            aria-label={action.label}
+                                                            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                            initial={{ scale: 0.8, opacity: 0 }}
+                                                            animate={{ scale: 1, opacity: 1 }}
+                                                            transition={{ delay: (index * 0.05) + (actionIndex * 0.1) }}
+                                                        >
+                                                            {action.loading ? (
+                                                                <div className="w-4 h-4 border-2 border-t-transparent border-current rounded-full animate-spin"></div>
+                                                            ) : (
+                                                                <action.icon className="w-4 h-4 group-hover/action:scale-110 transition-transform duration-200" />
+                                                            )}
+                                                        </motion.button>
+                                                    )
                                                 ))}
                                             </motion.div>
                                         </div>
                                     </div>
-
                                     <motion.div
                                         className="h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-100"
                                         initial={{ scaleX: 0 }}
@@ -233,7 +212,7 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
                 </ul>
             </motion.div>
 
-            {/* Footer */}
+            {/* Footer section matching the dashboard style */}
             {documents.length > 0 && (
                 <motion.div
                     className="bg-gradient-to-r from-gray-50/60 to-white/40 px-6 py-4 border-t border-white/30"
@@ -241,57 +220,49 @@ const DocumentList = ({ documents, onEdit, onDelete, onDownload }) => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                 >
-                    <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-600">
                         <div className="flex items-center space-x-4">
                             <span className="font-medium">
                                 {documents.length} document{documents.length !== 1 ? 's' : ''}
                             </span>
-                            <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                            <span>
+                            <div className="w-1 h-1 bg-gray-400 rounded-full hidden sm:block"></div>
+                            <span className="hidden sm:block">
                                 {formatFileSize(documents.reduce((sum, doc) => sum + (doc.fileSize || 0), 0))} total size
                             </span>
                         </div>
 
                         <motion.div
-                            className="flex items-center space-x-2"
+                            className="flex items-center space-x-4 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-xl shadow-sm border border-gray-100"
                             initial={{ x: 10, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
                             transition={{ delay: 0.4 }}
                         >
-                            <div className="flex space-x-1">
-                                {[1, 2, 3].map((i) => (
-                                    <motion.div
-                                        key={i}
-                                        className="w-2 h-2 bg-blue-400 rounded-full"
-                                        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                                        transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
-                                    />
-                                ))}
+                            <div className="flex items-center space-x-2">
+                                <div className="flex space-x-1">
+                                    {[1, 2, 3].map((i) => (
+                                        <motion.div
+                                            key={i}
+                                            className="w-2 h-2 bg-blue-400 rounded-full"
+                                            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                                            transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                                        />
+                                    ))}
+                                </div>
+                                <span className="text-xs text-gray-500">Live sync enabled</span>
                             </div>
-                            <span className="text-xs text-gray-500">Live sync enabled</span>
+
+                            <div className="w-px h-4 bg-gray-300"></div>
+
+                            <div className="flex items-center space-x-2">
+                                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                <span className="text-xs text-gray-500">All systems operational</span>
+                            </div>
                         </motion.div>
                     </div>
                 </motion.div>
             )}
         </motion.div>
     );
-};
-
-DocumentList.propTypes = {
-    documents: PropTypes.arrayOf(
-        PropTypes.shape({
-            id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-            fileName: PropTypes.string,
-            fileType: PropTypes.string,
-            category: PropTypes.string,
-            fileSize: PropTypes.number,
-            uploadDate: PropTypes.string,
-            status: PropTypes.string,
-        })
-    ).isRequired,
-    onEdit: PropTypes.func.isRequired,
-    onDelete: PropTypes.func.isRequired,
-    onDownload: PropTypes.func.isRequired,
 };
 
 export default React.memo(DocumentList);

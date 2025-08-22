@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { LogOut, Users, Trash2, Mail, User, FileText } from 'lucide-react';
+
 import axios from 'axios';
 import {FiArchive, FiFile, FiFileText as FiFileText, FiFilm, FiImage, FiMusic} from "react-icons/fi";
 
@@ -154,6 +152,23 @@ export const documentAPI = {
         }
     },
 
+    shareDocument: async (documentId, isPublic = true, expiryDays = 30, maxViews = 100) => {
+        try {
+            const response = await Api.post('/documents/share', {
+                documentId,
+                isPublic,
+                expiryDays,
+                maxViews
+            });
+            return response.data;
+        } catch (error) {
+            const message = error.response?.data?.message ||
+            error.response?.status === 403 ?
+                'You do not have permission to share this document' :
+                'Failed to share document';
+            throw new Error(message);
+        }
+    },
 
     uploadDocument: async (file, category, filename) => {
         const formData = new FormData();
@@ -279,9 +294,6 @@ export const documentAPI = {
                 type: response.data.fileType,
             };
         } catch (error) {
-            if (error.response?.status === 404) {
-                throw new Error('Document not found');
-            }
             throw new Error(error.message || 'Failed to fetch document');
         }
     },
@@ -308,7 +320,7 @@ export const documentAPI = {
 export const userAPI = {
     getAllUsers: async () => {
         try {
-            const response = await Api.get('/users');
+            const response = await Api.get('/admin/users');
             return response.data.map(user => ({
                 ...user,
                 id: user.id.toString(),
@@ -322,7 +334,7 @@ export const userAPI = {
     deleteUserById: async (id) => {
         if (!id) throw new Error('User ID is required');
         try {
-            await Api.delete(`/users/${id}`);
+            await Api.delete(`/admin/users/${id}`);
         } catch (error) {
             throw new Error(error.response?.data?.message || 'Failed to delete user');
         }

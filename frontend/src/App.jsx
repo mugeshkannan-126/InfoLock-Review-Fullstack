@@ -45,6 +45,9 @@ import AuthModal from "./pages/AuthModal";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import {ToastContainer} from "react-toastify";
 import SharedDocumentViewer from './components/SharedDocumentViewer';
+import SharedDocument from "./components/ShareDocument.jsx";
+import SharePage from "./components/SharePage.jsx";
+import Pricing from "./components/Pricing.jsx";
 
 
 export default function App() {
@@ -79,7 +82,11 @@ export default function App() {
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/shared/:token" element={<SharedDocumentViewer />} />
+                        {/*<Route path="/shared/:token" element={<SharedDocumentViewer />} />*/}
+                        <Route path="/shared/:token" element={<SharedDocument />} />
+                        <Route path="/doc/:docId" element={<SharePage />} />
+                        <Route path="/billing" element={<Pricing />} />
+
                     </Routes>
                 </div>
                 <Footer />

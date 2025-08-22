@@ -1,252 +1,447 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
-import {
-    FiShield,
-    FiCloud,
-    FiLock,
-    FiActivity,
-    FiDatabase,
-    FiGlobe,
-    FiArrowRight
-} from "react-icons/fi";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
-import img1 from '../assets/landing1.jpg'
-import img2 from '../assets/landing2.jpg'
-import img3 from '../assets/landing3.jpg'
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { Shield, Cloud, Lock, Star, Sparkles, Zap, Mail, Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 const Home = () => {
     const [showLogin, setShowLogin] = useState(false);
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const [isHovering, setIsHovering] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const { scrollYProgress } = useScroll();
+    const heroY = useTransform(scrollYProgress, [0, 0.5], [0, -100]);
+    const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0.7]);
 
     const heroSlides = [
         {
-            image: img1,
-            title: "Secure Your Digital Life with",
-            highlight: "INFOLOCK",
-            description: "The most trusted platform for secure document storage and sharing. Military-grade encryption with effortless usability."
+            title: 'Secure Your Digital Life with',
+            highlight: 'INFOLOCK',
+            description: 'The most trusted platform for secure document storage and sharing. Military-grade encryption with effortless usability.',
+            gradient: 'from-blue-600 to-purple-600',
         },
         {
-            image: img2,
-            title: "Enterprise-Grade",
-            highlight: "Security",
-            description: "End-to-end encryption with zero-knowledge architecture ensures your data remains private."
+            title: 'Enterprise-Grade',
+            highlight: 'Security',
+            description: 'End-to-end encryption with zero-knowledge architecture ensures your data remains private and secure.',
+            gradient: 'from-purple-600 to-indigo-600',
         },
         {
-            image: img3,
-            title: "Access Your Files",
-            highlight: "Anywhere",
-            description: "Secure cloud infrastructure with fast, reliable access from anywhere in the world."
-        }
+            title: 'Access Your Files',
+            highlight: 'Anywhere',
+            description: 'Secure cloud infrastructure with fast, reliable access from anywhere in the world at any time.',
+            gradient: 'from-indigo-600 to-blue-600',
+        },
     ];
 
     const sliderSettings = {
-        dots: true,
-        infinite: true,
-        speed: 1000,
-        slidesToShow: 1,
-        slidesToScroll: 1,
-        autoplay: true,
-        autoplaySpeed: 4000,
-        arrows: false,
-        fade: true,
-        pauseOnHover: false,
-        pauseOnFocus: false,
-        cssEase: 'linear'
+        autoplaySpeed: 5000,
+        totalSlides: heroSlides.length,
     };
+
+    // Auto-advance slides
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+        }, sliderSettings.autoplaySpeed);
+        return () => clearInterval(interval);
+    }, [heroSlides.length]);
+
+    // Mouse tracking for interactive effects
+    useEffect(() => {
+        const updateMousePosition = (e) => {
+            setMousePosition({ x: e.clientX, y: e.clientY });
+        };
+        window.addEventListener('mousemove', updateMousePosition);
+        return () => window.removeEventListener('mousemove', updateMousePosition);
+    }, []);
 
     // Close login modal with ESC key
     useEffect(() => {
         const handleEsc = (e) => {
-            if (e.key === "Escape") setShowLogin(false);
+            if (e.key === 'Escape') setShowLogin(false);
         };
-        window.addEventListener("keydown", handleEsc);
-        return () => window.removeEventListener("keydown", handleEsc);
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
     }, []);
 
+    // Form submission handler
+    const handleLoginSubmit = (e) => {
+        e.preventDefault();
+        console.log('Login attempt:', { email, password });
+        setShowLogin(false);
+        setEmail('');
+        setPassword('');
+        window.location.href = '/dashboard';
+    };
+
+    const features = [
+        {
+            icon: Shield,
+            title: 'Military-Grade Security',
+            description: 'End-to-end encryption with zero-knowledge architecture ensures your data remains completely private and secure.',
+            color: 'blue',
+        },
+        {
+            icon: Cloud,
+            title: 'Smart Cloud Sync',
+            description: 'Access your files from any device, anywhere with our intelligent cloud infrastructure and real-time synchronization.',
+            color: 'indigo',
+        },
+        {
+            icon: Lock,
+            title: 'Advanced Permission Control',
+            description: 'Granular sharing permissions and access controls for complete authority over your sensitive documents.',
+            color: 'purple',
+        },
+    ];
+
     return (
-        <div className="overflow-x-hidden font-outfit mx-10 my-10 rounded-xl">
-            {/* Hero Carousel Section */}
-            <section className="relative w-full">
-                <Slider {...sliderSettings}>
-                    {heroSlides.map((slide, index) => (
-                        <div key={index} className="relative h-[75vh] min-h-[550px] w-full">
-                            <img
-                                src={slide.image}
-                                alt={slide.title}
-                                className="h-full w-full object-cover object-center"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/60" />
-                            <div className="absolute inset-0 flex items-center px-[5%]">
-                                <div className="text-white w-full max-w-6xl mx-auto">
-                                    <div className="space-y-8 max-w-2xl">
-                                        <h1 className="text-4xl sm:text-5xl md:text-6xl font-outfit leading-tight tracking-tight drop-shadow-lg">
-                                            {slide.title}{" "}
-                                            <span className="font-bold bg-clip-text ">
-                                                {slide.highlight}
-                                            </span>
-                                        </h1>
-                                        <p className="text-lg sm:text-xl text-gray-200 font-outfit drop-shadow-md">
-                                            {slide.description}
-                                        </p>
-                                        <div className="flex flex-col sm:flex-row gap-4">
-                                            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                                                <Link
-                                                    to="/signup"
-                                                    className="px-8 py-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white font-semibold text-lg shadow-lg shadow-blue-500/40 hover:shadow-blue-500/60 hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 flex items-center gap-2"
-                                                >
-                                                    Get Started Free <FiArrowRight />
-                                                </Link>
-                                            </motion.div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </Slider>
-            </section>
-
-            {/* Features Section */}
-            <div className="w-full py-20 px-[5%]">
-                <div className="max-w-6xl mx-auto">
-                    <h2 className="text-center mb-16 font-bold text-4xl bg-gradient-to-r from-blue-500 to-emerald-500 bg-clip-text text-transparent font-playfair">
-                        Why Choose INFOLOCK?
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {[
-                            {
-                                icon: <FiShield size={40} className="text-blue-500" />,
-                                title: "Military-Grade Security",
-                                description: "End-to-end encryption with zero-knowledge architecture ensures your data remains private."
-                            },
-                            {
-                                icon: <FiCloud size={40} className="text-blue-500" />,
-                                title: "Cloud Sync",
-                                description: "Access your files from any device, anywhere with our secure cloud infrastructure."
-                            },
-                            {
-                                icon: <FiLock size={40} className="text-blue-500" />,
-                                title: "Permission Control",
-                                description: "Granular sharing permissions for complete control over your documents."
-                            },
-                            {
-                                icon: <FiActivity size={40} className="text-blue-500" />,
-                                title: "Activity Monitoring",
-                                description: "Real-time alerts and detailed audit logs for all file activities."
-                            },
-                            {
-                                icon: <FiDatabase size={40} className="text-blue-500" />,
-                                title: "Unlimited Storage",
-                                description: "Store all your important documents without worrying about space."
-                            },
-                            {
-                                icon: <FiGlobe size={40} className="text-blue-500" />,
-                                title: "Global Access",
-                                description: "Fast, reliable access from anywhere in the world with our distributed servers."
-                            }
-                        ].map((feature, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
-                                whileHover={{ y: -5 }}
-                                className="p-8 rounded-2xl bg-white shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100"
-                            >
-                                <div className="mb-5 p-3 bg-blue-50 rounded-full w-max">{feature.icon}</div>
-                                <h3 className="text-xl font-bold mb-3 font-playfair">{feature.title}</h3>
-                                <p className="text-gray-600">{feature.description}</p>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 overflow-hidden">
+            {/* Background Elements */}
+            <div className="fixed inset-0 pointer-events-none">
+                {[...Array(10)].map((_, i) => (
+                    <motion.div
+                        key={i}
+                        className="absolute"
+                        animate={{
+                            x: [0, Math.random() * 50 - 25],
+                            y: [0, Math.random() * 50 - 25],
+                            rotate: [0, 360],
+                            scale: [0.8, 1.2, 0.8],
+                        }}
+                        transition={{
+                            duration: Math.random() * 10 + 5,
+                            repeat: Infinity,
+                            delay: Math.random() * 3,
+                            ease: 'easeInOut',
+                        }}
+                        style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
+                    >
+                        {i % 2 === 0 ? (
+                            <Star className="w-3 h-3 text-blue-200 opacity-20" />
+                        ) : (
+                            <Sparkles className="w-3 h-3 text-indigo-200 opacity-15" />
+                        )}
+                    </motion.div>
+                ))}
+                <motion.div
+                    className="absolute w-96 h-96 bg-gradient-radial from-blue-100/20 via-purple-50/10 to-transparent rounded-full blur-3xl"
+                    animate={{ x: mousePosition.x - 192, y: mousePosition.y - 192 }}
+                    transition={{ type: 'spring', damping: 30, stiffness: 100 }}
+                />
+                <div className="absolute top-20 left-1/4 w-96 h-96 bg-blue-100/30 rounded-full filter blur-3xl opacity-50" />
+                <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-purple-100/25 rounded-full filter blur-3xl opacity-40" />
             </div>
 
-            {/* CTA Section */}
-            <div className="w-full py-20 px-[5%] bg-gradient-to-br from-gray-50 to-white">
-                <div className="max-w-4xl mx-auto text-center">
+            {/* Hero Carousel Section */}
+            <motion.section
+                style={{ y: heroY, opacity: heroOpacity }}
+                className="relative w-full h-screen flex items-center overflow-hidden"
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+            >
+                <div className="absolute inset-0">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-blue-50/90 to-purple-50/85" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.1),transparent_50%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.08),transparent_50%)]" />
+                </div>
+
+                <div className="relative z-10 container mx-auto px-[20%] max-w-7xl h-full flex items-center">
+                    <div className="w-full">
+                        <AnimatePresence mode="wait">
+                            {heroSlides.map(
+                                (slide, index) =>
+                                    index === currentSlide && (
+                                        <motion.div
+                                            key={index}
+                                            initial={{ opacity: 0, x: 100 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -100 }}
+                                            transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
+                                        >
+                                            <div className="flex items-center min-h-[80vh] py-20">
+                                                <div className="max-w-4xl mx-auto text-center">
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 50 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ duration: 0.8, delay: 0.2 }}
+                                                        className="mb-8"
+                                                    >
+                                                        <div className="inline-flex items-center gap-2 px-6 py-3 mb-8 text-sm font-medium text-blue-700 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-full shadow-sm backdrop-blur-sm">
+                                                            <Sparkles className="w-4 h-4" />
+                                                            Welcome to the Future of Security
+                                                        </div>
+                                                    </motion.div>
+                                                    <motion.h1
+                                                        initial={{ opacity: 0, y: 30 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ duration: 0.8, delay: 0.4 }}
+                                                        className="text-5xl md:text-7xl font-bold mb-8 leading-tight"
+                                                    >
+                                                        {slide.title}{' '}
+                                                        <span className={`text-transparent bg-gradient-to-r ${slide.gradient} bg-clip-text`}>
+                              {slide.highlight}
+                            </span>
+                                                    </motion.h1>
+                                                    <motion.p
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ duration: 0.8, delay: 0.6 }}
+                                                        className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed"
+                                                    >
+                                                        {slide.description}
+                                                    </motion.p>
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ duration: 0.8, delay: 0.8 }}
+                                                        className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+                                                    >
+                                                        <motion.div
+                                                            whileHover={{ scale: 1.05, boxShadow: '0 20px 25px -5px rgba(59, 130, 246, 0.4)' }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                        >
+                                                            <Link
+                                                                to="/signup"
+                                                                className="group inline-flex items-center gap-3 px-10 py-5 text-lg font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                                                                aria-label="Sign up for INFOLOCK"
+                                                            >
+                                                                Get Started Free
+                                                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                                            </Link>
+                                                        </motion.div>
+                                                    </motion.div>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ),
+                            )}
+                        </AnimatePresence>
+                        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-3">
+                            {heroSlides.map((_, index) => (
+                                <motion.button
+                                    key={index}
+                                    onClick={() => setCurrentSlide(index)}
+                                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                                        index === currentSlide ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/70'
+                                    }`}
+                                    whileHover={{ scale: 1.2 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    aria-label={`Go to slide ${index + 1}`}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </motion.section>
+
+            {/* Features Section */}
+            <motion.section
+                className="relative py-32 px-6"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1 }}
+            >
+                <div className="container mx-auto max-w-7xl">
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.8 }}
+                        className="text-center mb-20"
                     >
-                        <h3 className="text-3xl md:text-4xl font-bold mb-6 font-playfair">
+                        <div className="inline-flex items-center gap-2 px-6 py-3 mb-8 text-sm font-medium text-purple-700 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-100 rounded-full shadow-sm backdrop-blur-sm">
+                            <Star className="w-4 h-4" />
+                            Premium Features
+                        </div>
+                        <h2 className="text-5xl md:text-6xl font-bold mb-8 text-transparent bg-gradient-to-r from-gray-800 via-blue-600 to-purple-600 bg-clip-text">
+                            Why Choose INFOLOCK?
+                        </h2>
+                        <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                            Experience unparalleled security and functionality with our comprehensive suite of advanced features designed for modern professionals.
+                        </p>
+                    </motion.div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {features.map((feature, index) => {
+                            const Icon = feature.icon;
+                            const colorClasses = {
+                                blue: 'from-blue-500 to-blue-600 text-blue-600 bg-blue-50 border-blue-100',
+                                indigo: 'from-indigo-500 to-indigo-600 text-indigo-600 bg-indigo-50 border-indigo-100',
+                                purple: 'from-purple-500 to-purple-600 text-purple-600 bg-purple-50 border-purple-100',
+                            };
+                            return (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                                    whileHover={{ y: -10, scale: 1.02, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' }}
+                                    className="group relative p-8 bg-white/80 backdrop-blur-sm border border-gray-100 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500"
+                                >
+                                    <motion.div
+                                        whileHover={{ scale: 1.1, rotate: [0, -5, 5, 0] }}
+                                        transition={{ duration: 0.6 }}
+                                        className={`inline-flex items-center justify-center w-16 h-16 mb-6 bg-gradient-to-br ${colorClasses[feature.color]} rounded-2xl shadow-lg`}
+                                    >
+                                        <Icon className="w-8 h-8 text-white" />
+                                    </motion.div>
+                                    <h3 className="text-2xl font-bold mb-4 text-gray-800 group-hover:text-gray-900 transition-colors">
+                                        {feature.title}
+                                    </h3>
+                                    <p className="text-gray-600 leading-relaxed text-lg">{feature.description}</p>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-gray-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
+                                </motion.div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </motion.section>
+
+            {/* CTA Section */}
+            <motion.section
+                className="relative py-32 px-6"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1 }}
+            >
+                <div className="container mx-auto max-w-5xl text-center">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8 }}
+                        className="p-12 bg-gradient-to-br from-white/90 to-blue-50/80 backdrop-blur-sm border border-gray-100 rounded-3xl shadow-2xl"
+                    >
+                        <div className="inline-flex items-center gap-2 px-6 py-3 mb-8 text-sm font-medium text-green-700 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 rounded-full shadow-sm">
+                            <Zap className="w-4 h-4" />
+                            Join 50,000+ Professionals
+                        </div>
+                        <h3 className="text-4xl md:text-5xl font-bold mb-8 text-transparent bg-gradient-to-r from-gray-800 to-blue-600 bg-clip-text">
                             Ready to Secure Your Documents?
                         </h3>
-                        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-                            Join thousands of professionals who trust INFOLOCK with their sensitive data.
+                        <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
+                            Join thousands of professionals who trust INFOLOCK with their sensitive data. Experience enterprise-grade security with consumer-friendly simplicity.
                         </p>
                         <motion.div
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            className="inline-block"
+                            whileHover={{ scale: 1.05, boxShadow: '0 25px 50px -12px rgba(59, 130, 246, 0.5)' }}
+                            whileTap={{ scale: 0.95 }}
                         >
                             <Link
                                 to="/dashboard"
-                                className="inline-flex items-center px-12 py-4 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-lg shadow-lg hover:shadow-xl shadow-blue-500/30 hover:shadow-blue-500/40 transition-all duration-300"
+                                className="group inline-flex items-center gap-3 px-12 py-6 text-xl font-semibold text-white bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300"
+                                aria-label="Start free trial with INFOLOCK"
                             >
-                                Start Your Free Trial <FiArrowRight className="ml-2" />
+                                Start Your Free Trial
+                                <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
                             </Link>
                         </motion.div>
                     </motion.div>
                 </div>
-            </div>
+            </motion.section>
 
             {/* Login Modal */}
             {showLogin && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4"
                     onClick={() => setShowLogin(false)}
                 >
-                    <div
-                        className="max-w-96 w-full text-center border border-gray-300/60 rounded-2xl px-8 bg-white relative"
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                        className="w-full max-w-md bg-white/95 backdrop-blur-xl border border-gray-100 rounded-3xl p-8 shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <h1 className="text-gray-900 text-3xl mt-10 font-medium">Login</h1>
-                        <p className="text-gray-500 text-sm mt-2">
-                            Please sign in to continue
-                        </p>
-                        <div className="flex items-center w-full mt-10 bg-white border border-gray-300/80 h-12 rounded-full overflow-hidden pl-6 gap-2">
-                            <svg width="16" height="11" viewBox="0 0 16 11" fill="none">
-                                <path fillRule="evenodd" clipRule="evenodd" d="M0 .55.571 0H15.43l.57.55v9.9l-.571.55H.57L0 10.45zm1.143 1.138V9.9h13.714V1.69l-6.503 4.8h-.697zM13.749 1.1H2.25L8 5.356z" fill="#6B7280" />
-                            </svg>
-                            <input
-                                type="email"
-                                placeholder="Email id"
-                                className="bg-transparent text-gray-500 placeholder-gray-500 outline-none text-sm w-full h-full"
-                                required
-                            />
+                        <div className="text-center mb-8">
+                            <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg">
+                                <Zap className="w-8 h-8 text-white" />
+                            </div>
+                            <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h2>
+                            <p className="text-gray-600">Sign in to your secure account</p>
                         </div>
-                        <div className="flex items-center mt-4 w-full bg-white border border-gray-300/80 h-12 rounded-full overflow-hidden pl-6 gap-2">
-                            <svg width="13" height="17" viewBox="0 0 13 17" fill="none">
-                                <path d="M13 8.5c0-.938-.729-1.7-1.625-1.7h-.812V4.25C10.563 1.907 8.74 0 6.5 0S2.438 1.907 2.438 4.25V6.8h-.813C.729 6.8 0 7.562 0 8.5v6.8c0 .938.729 1.7 1.625 1.7h9.75c.896 0 1.625-.762 1.625-1.7zM4.063 4.25c0-1.406 1.093-2.55 2.437-2.55s2.438 1.144 2.438 2.55V6.8H4.061z" fill="#6B7280" />
-                            </svg>
-                            <input
-                                type="password"
-                                placeholder="Password"
-                                className="bg-transparent text-gray-500 placeholder-gray-500 outline-none text-sm w-full h-full"
-                                required
-                            />
-                        </div>
-                        <div className="mt-5 text-left text-indigo-500">
-                            <a className="text-sm" href="#">Forgot password?</a>
-                        </div>
-                        <button
-                            type="submit"
-                            className="mt-2 w-full h-11 rounded-full text-white bg-indigo-500 hover:opacity-90 transition-opacity"
-                        >
-                            Login
-                        </button>
-                        <p className="text-gray-500 text-sm mt-3 mb-11">
-                            Don’t have an account? <a className="text-indigo-500" href="#">Sign up</a>
-                        </p>
-                    </div>
-                </div>
+                        <form onSubmit={handleLoginSubmit} className="space-y-6">
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Email Address
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <Mail className="w-5 h-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        placeholder="Enter your email"
+                                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        aria-label="Email address"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Password
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <Lock className="w-5 h-5 text-gray-400" />
+                                    </div>
+                                    <input
+                                        id="password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="Enter your password"
+                                        className="w-full pl-12 pr-12 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        aria-label="Password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    >
+                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                                    Forgot password?
+                                </Link>
+                            </div>
+                            <motion.button
+                                type="submit"
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="w-full py-4 text-white font-semibold bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                                aria-label="Sign in"
+                            >
+                                Sign In
+                            </motion.button>
+                            <p className="text-center text-gray-600">
+                                Don't have an account?{' '}
+                                <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+                                    Create one now
+                                </Link>
+                            </p>
+                        </form>
+                    </motion.div>
+                </motion.div>
             )}
         </div>
     );

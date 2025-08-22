@@ -6,10 +6,13 @@ import Dashboard from './pages/Dashboard.jsx';
 import './index.css';
 import ImageSlider from "./components/ImageSlider.jsx";
 import {BrowserRouter} from "react-router-dom";
+import DocumentCard from "./components/DocumentCard.jsx";
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
-      {/*<Dashboard/>*/}
+    {/*  <Dashboard/>*/}
+    {/*  <DocumentCard/>*/}
   </StrictMode>,
+
 )

@@ -17,16 +17,17 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import in.example.infolock.demo.security.JwtFilter;
-import in.example.infolock.demo.services.CustomUserDetailsService;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import in.example.infolock.demo.security.JwtFilter;
+import in.example.infolock.demo.services.CustomUserDetailsService;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
     @Autowired
     private JwtFilter jwtFilter;
 
@@ -36,6 +37,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz ->
                         authz
                                 .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+                                .requestMatchers("/api/admin").permitAll()
+                                .requestMatchers("/api/documents/share/**").permitAll()
                                 .requestMatchers("/api/documents/**").authenticated()
                                 .anyRequest().permitAll()
                 )
@@ -50,10 +53,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173")); // Add your frontend URLs
+        // Explicitly list allowed origins
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://192.168.1.100:5173", "http://localhost:5174"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        configuration.setExposedHeaders(List.of("Authorization")); // Expose Authorization header for JWT
+        configuration.setAllowCredentials(true); // Allow credentials
+        configuration.setMaxAge(3600L); // Cache preflight response for 1 hour
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -82,5 +88,4 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager() {
         return new ProviderManager(List.of(authenticationProvider()));
     }
-
 }
